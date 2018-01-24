@@ -73,7 +73,7 @@ def DigitCaps(input, num_capsules, dim_out_vector, routings=3, name='DigitCaps')
             # Output shape = [#][1, 10, 16, 1]
             Vj = Squash(Sj)
 
-            # line 7: for all capsule i in layer l and capsule j in layer (l + 1): bij ← bij + ^uj|i *vj
+            # line 7: for all capsule i in layer l and capsule j in layer (l + 1): bij ← bij + ^uj|i * vj
             # Output shape = [#][1, 10, 1, 16]
             Vj_Transpose = ct.transpose(ct.reshape(Vj, (1, 10, 16, 1)), (0, 1, 3, 2), name='Vj_Transpose')
 
@@ -91,8 +91,8 @@ def PrimaryCaps(num_capsules, dim_out_vector, filter_shape, strides=1, pad=False
     Layer factory function to create an instance of a primary capsule.
 
     Args:
+        num_capsules: Number of primary capsules
         dim_out_vector: Number of dimensions of the capsule output vector
-        num_capsules: Number of convolutional capsules
         filter_shape: Convoltional filter shape
 
     Returns:
@@ -114,7 +114,7 @@ def PrimaryCaps(num_capsules, dim_out_vector, filter_shape, strides=1, pad=False
 
     return primaryCaps
 
-def Squash(s_j, axis=-1, name='', epsilon=1e-9):
+def Squash(Sj, axis=-1, name='', epsilon=1e-9):
     '''
     Squash over the the specified axis.
 
@@ -122,7 +122,7 @@ def Squash(s_j, axis=-1, name='', epsilon=1e-9):
     It is analogous to Sigmoid (used in ANN) which remaps real numbers onto (0, 1).
 
     Args:
-        s_j: Elements to squash.
+        Sj: Elements to squash.
         axis (int, optional): Axis along which a squash is performed.
         name (str, optional): The name of the Function instance in the network.
         epsilon (float, optional): A small constant for numerical stability.
@@ -131,19 +131,21 @@ def Squash(s_j, axis=-1, name='', epsilon=1e-9):
     '''
 
     @BlockFunction('Squash', name)
-    def Squash(input):
-        # ||s_j||^2
-        s_j_squared_norm = ct.reduce_sum(ct.square(input), axis=axis)
-        # ||s_j||^2 / (1 + ||s_j||^2) * (s_j / ||s_j||)
+    def squash(input):
+
+        # ||Sj||^2
+        Sj_squared_norm = ct.reduce_sum(ct.square(input), axis=axis)
+
+        # ||Sj||^2 / (1 + ||Sj||^2) * (Sj / ||Sj||)
         factor = ct.element_divide(
             ct.element_divide(
-                s_j_squared_norm,
-                ct.plus(1, s_j_squared_norm)
+                Sj_squared_norm,
+                ct.plus(1, Sj_squared_norm)
             ),
             ct.sqrt(
-                ct.plus(s_j_squared_norm, epsilon)
+                ct.plus(Sj_squared_norm, epsilon)
             )
         )
         return factor * input
 
-    return Squash(s_j)
+    return squash(Sj)
