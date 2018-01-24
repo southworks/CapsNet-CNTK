@@ -35,3 +35,5 @@ Then navigate to http://localhost:6006
 
 - Add Reconstruction Layer
 - Add Benchmarks
+- Improve de API
+- Capsule Visualization
