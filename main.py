@@ -19,7 +19,6 @@ num_output_classes = 10
 
 # Read a CTF formatted text using the CTF deserializer from a file
 def create_reader(path, is_training, input_dim, num_label_classes):
-
     ctf = ct.io.CTFDeserializer(path, ct.io.StreamDefs(
           labels=ct.io.StreamDef(field='labels', shape=num_label_classes, is_sparse=False),
           features=ct.io.StreamDef(field='features', shape=input_dim, is_sparse=False)))
@@ -41,23 +40,38 @@ def train_and_test(reader_train, reader_test, reader_cv, restore_checkpoint=True
     '''
     from CapsNet import CapsNet
 
-    caps_net = CapsNet()
-    input = ct.input_variable(input_dim_model, name='MINST_Image_Input')
-    digitcaps, length = caps_net.model(input/255.)
+    input = ct.input_variable(input_dim_model, name='MINST_Input')
+    labels = ct.input_variable(output_dim_model, name='MINST_Labels')
 
-    # ct.logging.graph.plot(length, 'images/CapsNetArch.png')
+    caps_net = CapsNet(input/255., labels)
 
-    # evaluation
-    predict = ct.softmax(length, axis=0)
-    y_hay = ct.argmax(predict, axis=0)
+    # models
+    digitcaps, length, encoder = caps_net.model()
 
     # loss & error
-    labels = ct.input_variable(output_dim_model)
-    loss, error = caps_net.criterion(labels)
+    loss, error = caps_net.criterion()
+
+    ct.logging.graph.plot(length, 'images/CapsNetArch.png')
+
+    # evaluation
+    # predict = ct.softmax(length, axis=0)
+    # y_hay = ct.argmax(predict, axis=0)
+
+    # Default model without reconstruction subnetwork
+    trainable_model = digitcaps
 
     # Number of parameters in the network
+    # 5. Capsules on MNIST "... CapsNet has 8.2M parameters and 6.8M parameters without the reconstruction subnetwork."
     num_parameters, num_tensors = get_number_of_parameters(digitcaps)
     print("DigitCaps contains {} learneable parameters in {} parameter tensors.".format(num_parameters, num_tensors))
+    if encoder is not None:
+        ct.logging.graph.plot(encoder, 'images/CapsNetArch_WithReconstruction.png')
+
+        num_parameters, num_tensors = get_number_of_parameters(encoder)
+        print("With reconstruction subnetwork contains {} learneable parameters in {} parameter tensors.".format(num_parameters, num_tensors))
+
+        # As encoder is valid, use as trainable model
+        trainable_model = encoder
 
     # Initialize the parameters for the trainer
     minibatch_size = 128
@@ -90,7 +104,7 @@ def train_and_test(reader_train, reader_test, reader_cv, restore_checkpoint=True
     training_progress_output_freq = 1
 
     if tensorboard_logdir is not None:
-        progress_writers.append(ct.logging.TensorBoardProgressWriter(freq=training_progress_output_freq, log_dir=tensorboard_logdir, model=digitcaps))
+        progress_writers.append(ct.logging.TensorBoardProgressWriter(freq=training_progress_output_freq, log_dir=tensorboard_logdir, model=trainable_model))
 
     # Instantiate the learning rate schedule
     learning_rate_schedule = [0.01] * 5 + [0.003] * 5 + [0.001]
@@ -98,13 +112,13 @@ def train_and_test(reader_train, reader_test, reader_cv, restore_checkpoint=True
 
     # Instantiate the trainer object to drive the model training
     learner = ct.adam(
-        digitcaps.parameters,
+        trainable_model.parameters,
         learning_rate_schedule,
         momentum=[0.9],
         variance_momentum=[0.999],
         gaussian_noise_injection_std_dev=[0.0]
     )
-    trainer = ct.Trainer(digitcaps, (loss, error), [learner], progress_writers)
+    trainer = ct.Trainer(trainable_model, (loss, error), [learner], progress_writers)
 
     ct.training_session(
         trainer=trainer,
