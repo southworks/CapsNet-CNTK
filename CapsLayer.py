@@ -4,6 +4,28 @@ import numpy as np
 from cntk.ops.functions import BlockFunction
 from user_matmul import user_matmul
 
+def Masking(name='Masking'):
+    '''
+    Mask out all but the activity vector of the correct digit capsule.
+
+    Args:
+        name (str, optional): The name of the Function instance in the network.
+
+    Returns:
+        Function
+    '''
+
+    #@BlockFunction('MaskingLayer', name)
+    def masking(input, labels):
+
+        mask = ct.reshape(ct.one_hot(ct.reshape(ct.argmax(labels, axis=0), shape=(-1,)), 10), shape=(10, 1, 1))
+        mask = ct.splice(*([mask]*16), axis=1)
+        mask = ct.stop_gradient(mask)
+
+        return ct.reshape(ct.element_times(input, mask), shape=(-1,))
+
+    return masking
+
 def Length(name='Length', epsilon = 1e-9):
     '''
     Length of the instantiation vector to represent the probability that a capsule’s entity exists.
