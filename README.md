@@ -31,9 +31,19 @@ tensorboard --logdir tensorboard
 
 Then navigate to http://localhost:6006
 
+## Results
+
+### Test Error
+
+   Method     |   Routing   |   Reconstruction  |  MNIST (%)  |  *Paper*
+   :---------|:------:|:---:|:----:|:----:
+   Baseline |  -- | -- | --             | *0.39*
+   CapsNet  |  3 | no | 0.55 | 0.35 (0.036)
+   CapsNet  |  3 | yes| WIP  | 0.25 (0.005)
+
 ## TODO
 
-- Add Reconstruction Layer
-- Add Benchmarks
-- Improve de API
-- Capsule Visualization
+- Display reconstruction subnetwork on Tensorflow panel
+- Add benchmarks
+- Improve the API
+- Capsule visualization
