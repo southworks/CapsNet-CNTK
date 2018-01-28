@@ -41,9 +41,12 @@ Then navigate to http://localhost:6006
    CapsNet  |  3 | no | 0.55 | 0.35 (0.036)
    CapsNet  |  3 | yes| WIP  | 0.25 (0.005)
 
+### Reconstuction layer
+
+<a href="images/reconstruction.png"><img src="images/reconstruction.png"  width="364" height="224"></a>
+
 ## TODO
 
-- Display reconstruction subnetwork on Tensorflow panel
 - Add benchmarks
 - Improve the API
 - Capsule visualization

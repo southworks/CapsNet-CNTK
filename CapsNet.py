@@ -9,12 +9,13 @@ class CapsNet(object):
     Capsule Net Architecture (Sara Sabour, et al. 2017, "Dynamic Routing Between Capsules")
     '''
 
-    def __init__(self, features, labels, use_reconstruction=True):
+    def __init__(self, features, labels, routings=3, use_reconstruction=True):
         self.features = features
         self.labels = labels
+        self.routings = routings
         self.use_reconstruction = use_reconstruction
 
-    def model(self):
+    def models(self):
         """
         CapsNet Architecture model generation
         """
@@ -34,21 +35,38 @@ class CapsNet(object):
 
         # Layer 3: .. "The final Layer (DigitCaps) has one 16D capsule per digit class and each of
         # these capsules receives input from all the capsules in the layer below."
-        self.digitcaps = DigitCaps(primary, num_capsules=10, dim_out_vector=16, routings=3, name='DigitCaps')
+        self.digitcaps = DigitCaps(primary, num_capsules=10, dim_out_vector=16, routings=self.routings, name='DigitCaps')
+        self.training_model = self.digitcaps
 
+        # Layer 4:
         self.length = Length()(self.digitcaps)
 
-        # Model the reconstruction Layer
-        self.encoder = None
+        # Output shape: [#][10, 1]
+        self.predict_class = ct.softmax(self.length, axis=0)
+
+        # Reconstruction Layer
+        self.decoder = None
+        self.reconstruction_model = None
+
         if self.use_reconstruction:
             # Ouput shape: [#][160]
-            self.masking = Masking()(self.digitcaps, self.labels)
+            self.training_mask = Masking()(self.digitcaps, self.labels)
+            self.prediction_mask = Masking(is_inference=True)(self.digitcaps, self.length)
 
-            fc1 = ct.layers.Dense(512, activation=ct.relu)(self.masking)
-            fc2 = ct.layers.Dense(1024, activation=ct.relu)(fc1)
-            self.encoder = ct.layers.Dense(784, activation=ct.sigmoid)(fc2)
+            # Output shape: [#][784, 1]
+            self.decoder = ct.layers.Sequential([
+                ct.layers.Dense(512, activation=ct.relu),
+                ct.layers.Dense(1024, activation=ct.relu),
+                ct.layers.Dense(784, activation=ct.sigmoid)
+            ])
 
-        return self.digitcaps, self.length, self.encoder
+            # shared weights for training and prediction
+            self.training_model = self.decoder(self.training_mask)
+            self.reconstruction_model = self.decoder(self.prediction_mask)
+
+        # self.training_model = ct.debugging.debug_model(self.training_model)
+
+        return self.training_model, self.predict_class, self.reconstruction_model
 
     def criterion(self):
 
@@ -74,7 +92,7 @@ class CapsNet(object):
 
         if self.use_reconstruction:
             features = ct.reshape(self.features, shape=(-1,))
-            encoder = ct.reshape(self.encoder, shape=(-1,))
+            encoder = ct.reshape(self.training_model, shape=(-1,))
             squared = ct.square(encoder - features)
             reconstruction_err = ct.reduce_mean(squared, axis=0)
             reconstruction_err = ct.reduce_mean(reconstruction_err, axis=ct.axis.Axis.default_batch_axis())
