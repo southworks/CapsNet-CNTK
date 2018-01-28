@@ -4,7 +4,7 @@ import numpy as np
 from cntk.ops.functions import BlockFunction
 from user_matmul import user_matmul
 
-def Masking(name='Masking'):
+def Masking(is_inference=False, name='Masking'):
     '''
     Mask out all but the activity vector of the correct digit capsule.
 
@@ -15,13 +15,16 @@ def Masking(name='Masking'):
         Function
     '''
 
-    #@BlockFunction('MaskingLayer', name)
+    # @BlockFunction('MaskingLayer', name)
     def masking(input, labels):
 
-        mask = ct.reshape(ct.one_hot(ct.reshape(ct.argmax(labels, axis=0), shape=(-1,)), 10), shape=(10, 1, 1))
-        mask = ct.splice(*([mask]*16), axis=1)
-        mask = ct.stop_gradient(mask)
+        if is_inference:
+            mask = ct.reshape(ct.one_hot(ct.reshape(ct.argmax(labels, axis=0), shape=(-1,)), 10), shape=(10, 1, 1))
+            mask = ct.stop_gradient(mask)
+        else:
+            mask = ct.reshape(labels, shape=(10, 1, 1))
 
+        mask = ct.splice(*([mask]*16), axis=1)
         return ct.reshape(ct.element_times(input, mask), shape=(-1,))
 
     return masking
