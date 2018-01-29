@@ -18,7 +18,9 @@ class Main():
 
     # Define model dimensions
     input_dim_model = (1, 28, 28)    # images are 28 x 28 with 1 channel of color (gray)
-    output_dim_model = (10)
+    output_dim_model = (10,)
+    perturbations_dim = (16,)
+
     input_dim = 28*28
     num_output_classes = 10
     reconstruction_model = None
@@ -48,13 +50,14 @@ class Main():
 
         self.input = ct.input_variable(self.input_dim_model, name='MINST_Input')
         self.labels = ct.input_variable(self.output_dim_model, name='MINST_Labels')
+        self.perturbations = ct.input_variable(self.perturbations_dim,  name='Perturbations')
 
         self.caps_net = CapsNet(self.input/255., self.labels, routings=3, use_reconstruction=True)
 
         # models
         self.training_model, self.prediction_model, self.reconstruction_model = self.caps_net.models()
+        self.manipulation_model = self.caps_net.manipulation(self.perturbations)
 
-        pc = ct.debugging.debug_model(self.caps_net.predict_class)
         # loss & error
         loss, error = self.caps_net.criterion()
 
@@ -69,9 +72,9 @@ class Main():
         num_sweeps_to_train_with = 30
 
         # Report & Checkpoint frequency
-        print_frequency = (5, ct.DataUnit.minibatch)
+        print_frequency = (4, ct.DataUnit.minibatch)
         checkpoint_frequency = (100, ct.DataUnit.minibatch)
-        cross_validation_frequency = (25, ct.DataUnit.minibatch)
+        cross_validation_frequency = (40, ct.DataUnit.minibatch)
 
         tensorboard_logdir = './tensorboard'
 
@@ -143,6 +146,15 @@ class Main():
             )
         ).train()
 
+        # save models
+        self.training_model.save('./models/training_model.cntk')
+        self.prediction_model.save('./models/prediction_model.cntk')
+        if self.reconstruction_model:
+            self.reconstruction_model.save('./models/reconstruction_model.cntk')
+            self.manipulation_model.save('./models/manipulation_model.cntk')
+
+        print('Done.')
+
     def cross_validation_callbackfunc(self, index, average_error, cv_num_samples, cv_num_minibatches):
 
         # Use a 5x5 matrix of images
@@ -171,21 +183,21 @@ class Main():
         self.tb_printer.flush()
         return True
 
-    def image_grid(self, img_matrix):
+    def image_grid(self, img_matrix, side=5):
         # write reconstruction back as image
-        out_img = np.array([], dtype=np.float32).reshape(0,28 * 5)
+        out_img = np.array([], dtype=np.float32).reshape(0,28 * side)
 
         # make a grid with all images
-        for i in range(5):
-            row = np.array([], dtype=np.float32).reshape(28,0)
-            for j in range(5):
+        for i in range(side):
+            row = np.array([], dtype=np.float32).reshape(28, 0)
+            for j in range(side):
                 img = img_matrix[i*5+j]
                 img = np.reshape(img, (28, 28))
                 row = np.concatenate([row, img], axis=1)
             out_img = np.concatenate([out_img, row], axis=0)
 
         # Reshape and scale
-        out_img = np.reshape(out_img, (1, 1, 140, 140))
+        out_img = np.reshape(out_img, (1, 1, 28 * side, 28 * side))
         out_img = np.multiply(out_img, 255.)
         return out_img
 
