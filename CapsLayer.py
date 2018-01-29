@@ -4,7 +4,7 @@ import numpy as np
 from cntk.ops.functions import BlockFunction
 from user_matmul import user_matmul
 
-def Masking(is_inference=False, name='Masking'):
+def Masking(is_onehot_encoded=True, name='Masking'):
     '''
     Mask out all but the activity vector of the correct digit capsule.
 
@@ -18,7 +18,7 @@ def Masking(is_inference=False, name='Masking'):
     # @BlockFunction('MaskingLayer', name)
     def masking(input, labels):
 
-        if is_inference:
+        if not is_onehot_encoded:
             mask = ct.reshape(ct.one_hot(ct.reshape(ct.argmax(labels, axis=0), shape=(-1,)), 10), shape=(10, 1, 1))
             mask = ct.stop_gradient(mask)
         else:
@@ -65,6 +65,7 @@ def DigitCaps(input, num_capsules, dim_out_vector, routings=3, name='DigitCaps')
     # reshape input for broadcasting on all output capsules
     input = ct.reshape(input, (1152, 1, 8, 1), name='reshape_input')
 
+    # TODO: It would be possible to replace this custom operation with the batchMatmul op when CNTK 2.4 is released.
     # Output shape = [#](1152, 10, 16, 1)
     u_hat = user_matmul(W, input, shape=(1152, 10, 16, 1))
 

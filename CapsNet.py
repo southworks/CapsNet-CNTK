@@ -51,7 +51,7 @@ class CapsNet(object):
         if self.use_reconstruction:
             # Ouput shape: [#][160]
             self.training_mask = Masking()(self.digitcaps, self.labels)
-            self.prediction_mask = Masking(is_inference=True)(self.digitcaps, self.length)
+            self.prediction_mask = Masking(is_onehot_encoded=False)(self.digitcaps, self.length)
 
             # Output shape: [#][784, 1]
             self.decoder = ct.layers.Sequential([
@@ -60,13 +60,19 @@ class CapsNet(object):
                 ct.layers.Dense(784, activation=ct.sigmoid)
             ])
 
-            # shared weights for training and prediction
+            # shared weights for training, prediction and manipulation
             self.training_model = self.decoder(self.training_mask)
             self.reconstruction_model = self.decoder(self.prediction_mask)
 
-        # self.training_model = ct.debugging.debug_model(self.training_model)
-
         return self.training_model, self.predict_class, self.reconstruction_model
+
+    def manipulation(self, input, digitcaps=None):
+        if digitcaps is None:
+            digitcaps = self.digitcaps
+        self.perturbed_digitcaps = ct.plus(digitcaps, ct.reshape(input, shape=(1, 16, 1)))
+        self.manipulation_mask = Masking(is_onehot_encoded=False)(self.perturbed_digitcaps, self.length)
+        self.manipulation_model = self.decoder(self.manipulation_mask)
+        return self.manipulation_model
 
     def criterion(self):
 
