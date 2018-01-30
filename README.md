@@ -39,14 +39,21 @@ Then navigate to http://localhost:6006
    :---------|:------:|:---:|:----:|:----:
    Baseline |  -- | -- | --             | *0.39*
    CapsNet  |  3 | no | 0.55 | 0.35 (0.036)
-   CapsNet  |  3 | yes| WIP  | 0.25 (0.005)
+   CapsNet  |  3 | yes| WIP | 0.25 (0.005)
 
 ### Reconstruction layer
 
 <a href="images/reconstruction.png"><img src="images/reconstruction.png"  width="364" height="224"></a>
 
+### Dimension perturbations
+
+<a href="images/manipulated/0.png"><img src="images/manipulated/0.png"  width="60" height="96"></a>|<a href="images/manipulated/1.png"><img src="images/manipulated/1.png"  width="60" height="96"></a>|<a href="images/manipulated/2.png"><img src="images/manipulated/2.png"  width="60" height="96"></a>|<a href="images/manipulated/3.png"><img src="images/manipulated/3.png"  width="60" height="96"></a>|<a href="images/manipulated/4.png"><img src="images/manipulated/4.png"  width="60" height="96"></a>
+
+<a href="images/manipulated/5.png"><img src="images/manipulated/5.png"  width="60" height="96"></a>|<a href="images/manipulated/6.png"><img src="images/manipulated/6.png"  width="60" height="96"></a>|<a href="images/manipulated/7.png"><img src="images/manipulated/7.png"  width="60" height="96"></a>|<a href="images/manipulated/8.png"><img src="images/manipulated/8.png"  width="60" height="96"></a>|<a href="images/manipulated/9.png"><img src="images/manipulated/9.png"  width="60" height="96"></a>
+
 ## TODO
 
-- Add benchmarks
-- Improve the API
+- Complete benchmarks
 - Capsule visualization
+- Improve the API
+- Try other datasets
