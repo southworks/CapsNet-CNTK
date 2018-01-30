@@ -4,7 +4,7 @@ import cntk as ct
 import os
 
 from _cntk_py import set_fixed_random_seed, force_deterministic_algorithms
-from utils import get_number_of_parameters
+from utils import get_number_of_parameters, image_grid, create_reader
 
 # Ensure that we always get the same results
 np.random.seed(1)
@@ -24,15 +24,6 @@ class Main():
     input_dim = 28*28
     num_output_classes = 10
     reconstruction_model = None
-
-    # Read a CTF formatted text using the CTF deserializer from a file
-    def create_reader(self, path, is_training, input_dim, num_label_classes):
-        ctf = ct.io.CTFDeserializer(path, ct.io.StreamDefs(
-            labels=ct.io.StreamDef(field='labels', shape=num_label_classes, is_sparse=False),
-            features=ct.io.StreamDef(field='features', shape=input_dim, is_sparse=False)))
-
-        return ct.io.MinibatchSource(ctf,
-            randomize = is_training, max_sweeps = ct.io.INFINITELY_REPEAT if is_training else 1)
 
     def train_and_test(self, reader_train, reader_test, reader_cv, restore_checkpoint=True):
         '''
@@ -165,8 +156,10 @@ class Main():
         decoded_images = self.reconstruction_model.eval({ self.input: np.reshape(source_images, (-1, 1, 28, 28)) })
 
         # Reconstruction network
-        source_img = self.image_grid(source_images/255.)
-        decoded_img = self.image_grid(decoded_images)
+        source_img = image_grid(source_images)
+        decoded_img = image_grid(decoded_images * 255)
+
+        # the input_variable is required by the write_image c++ implementation
         img_shape = ct.input_variable(shape=(1, 140, 140), dtype=np.float32)
         self.tb_printer.write_image('reconstruction', { img_shape : decoded_img }, index)
         self.tb_printer.write_image('original', { img_shape : source_img }, index)
@@ -183,31 +176,13 @@ class Main():
         self.tb_printer.flush()
         return True
 
-    def image_grid(self, img_matrix, side=5):
-        # write reconstruction back as image
-        out_img = np.array([], dtype=np.float32).reshape(0,28 * side)
-
-        # make a grid with all images
-        for i in range(side):
-            row = np.array([], dtype=np.float32).reshape(28, 0)
-            for j in range(side):
-                img = img_matrix[i*5+j]
-                img = np.reshape(img, (28, 28))
-                row = np.concatenate([row, img], axis=1)
-            out_img = np.concatenate([out_img, row], axis=0)
-
-        # Reshape and scale
-        out_img = np.reshape(out_img, (1, 1, 28 * side, 28 * side))
-        out_img = np.multiply(out_img, 255.)
-        return out_img
-
     def capsule_network(self, data_dir):
 
         train_file = os.path.join(data_dir, "Train-28x28_cntk_text.txt")
         test_file = os.path.join(data_dir, "Test-28x28_cntk_text.txt")
-        self.reader_train = self.create_reader(train_file, True, self.input_dim, self.num_output_classes)
-        self.reader_cv = self.create_reader(test_file, True, self.input_dim, self.num_output_classes)
-        self.reader_test = self.create_reader(test_file, False, self.input_dim, self.num_output_classes)
+        self.reader_train = create_reader(train_file, True, self.input_dim, self.num_output_classes)
+        self.reader_cv = create_reader(test_file, True, self.input_dim, self.num_output_classes)
+        self.reader_test = create_reader(test_file, False, self.input_dim, self.num_output_classes)
 
         return self.train_and_test(self.reader_train, self.reader_test, self.reader_cv)
 
