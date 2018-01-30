@@ -1,5 +1,6 @@
 import numpy as np
 import cntk as ct
+import re
 from cntk.ops.functions import UserFunction
 
 class matmul(UserFunction):
@@ -41,7 +42,7 @@ class matmul(UserFunction):
     def deserialize(inputs, name, state):
         shape = ()
         for s, v in state.items():
-            if "shape" in s:
+            if re.match('s[0-4]', s):
                 shape += (v,)
         return matmul(inputs[0], inputs[1], shape=shape, stop_gradients=state['stop_gradients'], name=name)
 
