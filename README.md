@@ -57,3 +57,8 @@ Then navigate to http://localhost:6006
 - Capsule visualization
 - Improve the API
 - Try other datasets
+
+## Known issues
+
+- It currently works only on CPU due to CNTK lacks the matmul operation, we hope to fix this issue by the CNTK 2.4 using the new batchMatmul operation ( [#2817](https://github.com/Microsoft/CNTK/issues/2817)).
+
