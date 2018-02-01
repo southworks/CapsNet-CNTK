@@ -3,6 +3,7 @@ from __future__ import print_function
 import numpy as np
 import cntk as ct
 import os
+import codecs, json
 
 from utils import image_grid, create_reader, save_image
 
@@ -72,7 +73,26 @@ class Export():
 
         return None
 
-    def capsule_network(self, count, data_dir):
+    def export_weights(self, filename, model, count=None):
+        if not count:
+            count=len(model.parameters)
+        params = []
+        for ix in range(count):
+            param = model.parameters[ix]
+            p = {}
+            p['name'] = param.name
+            p['shape'] = list(param.shape)
+            p['value'] = param.value.tolist()
+            params.append(p)
+
+        dirs = os.path.dirname(filename)
+        if not os.path.exists(dirs):
+            os.makedirs(dirs)
+        json.encoder.FLOAT_REPR = lambda o: format(o, '.6f')
+        json.dump(params, codecs.open(filename, 'w+', encoding='utf-8'), separators=(',', ':'))
+        return None
+
+    def capsule_network(self, count, data_dir, apply_perturbations=False):
 
         test_file = os.path.join(data_dir, "Test-28x28_cntk_text.txt")
         self.reader_test = create_reader(test_file, False, self.input_dim, self.num_output_classes)
@@ -81,12 +101,15 @@ class Export():
         self.load_models()
 
         # save papper perturbations as images, one image per digit with 16 * 12 perturbations.
-        self.apply_perturbations(count, self.reader_test)
+        if apply_perturbations:
+            self.apply_perturbations(count, self.reader_test)
+
+        self.export_weights('./exports/weights.json', self.manipulation_model, count=6)
 
         # TODO: export json with:
         #  - reconstruction network weights
         #  - mini testset with all digitcaps outputs
-
+        #  - app with sliders
         return None
 
 if __name__ == '__main__':
