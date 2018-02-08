@@ -2,9 +2,10 @@ from __future__ import print_function
 import numpy as np
 import cntk as ct
 import os
+from collections import OrderedDict
 
 from _cntk_py import set_fixed_random_seed, force_deterministic_algorithms
-from utils import get_number_of_parameters, image_grid, create_reader
+from utils import *
 
 # Ensure that we always get the same results
 np.random.seed(1)
@@ -46,7 +47,7 @@ class Main():
         self.caps_net = CapsNet(self.input/255., self.labels, routings=3, use_reconstruction=True)
 
         # models
-        self.training_model, self.prediction_model, self.reconstruction_model = self.caps_net.models()
+        self.training_model, self.digitcaps_model, self.prediction_model, self.reconstruction_model = self.caps_net.models()
         self.manipulation_model = self.caps_net.manipulation(self.perturbations)
 
         # loss & error
@@ -65,7 +66,7 @@ class Main():
         # Report & Checkpoint frequency
         print_frequency = (4, ct.DataUnit.minibatch)
         checkpoint_frequency = (100, ct.DataUnit.minibatch)
-        cross_validation_frequency = (40, ct.DataUnit.minibatch)
+        cross_validation_frequency = (1, ct.DataUnit.minibatch)
 
         tensorboard_logdir = './tensorboard'
 
@@ -138,6 +139,7 @@ class Main():
         ).train()
 
         # save models
+        self.digitcaps_model.save('./models/digitcaps_model.cntk')
         self.training_model.save('./models/training_model.cntk')
         self.prediction_model.save('./models/prediction_model.cntk')
         if self.reconstruction_model:
@@ -149,10 +151,9 @@ class Main():
     def cross_validation_callbackfunc(self, index, average_error, cv_num_samples, cv_num_minibatches):
 
         # Use a 5x5 matrix of images
-        mb = self.reader_cv.next_minibatch(25)
-        input, labels = mb.items()
-        source_images = input[1].data.asarray()
-        source_labels = labels[1].data.asarray()
+        minibatch = self.reader_cv.next_minibatch(25)
+        source_images = get_stream_by_shape(minibatch, (1, 784)).data.asarray()
+        source_labels = get_stream_by_shape(minibatch, (1, 10)).data.asarray()
         decoded_images = self.reconstruction_model.eval({ self.input: np.reshape(source_images, (-1, 1, 28, 28)) })
 
         # Reconstruction network

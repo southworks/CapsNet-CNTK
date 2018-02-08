@@ -64,7 +64,7 @@ class CapsNet(object):
             self.training_model = self.decoder(self.training_mask)
             self.reconstruction_model = self.decoder(self.prediction_mask)
 
-        return self.training_model, self.predict_class, self.reconstruction_model
+        return self.training_model, self.digitcaps, self.predict_class, self.reconstruction_model
 
     def manipulation(self, input, digitcaps=None):
         if digitcaps is None:

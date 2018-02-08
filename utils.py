@@ -70,3 +70,11 @@ def save_image(filename, image, is_float=True, is_bn=True):
 
         r = cv2.imwrite(filename, image)
 
+def get_stream_by_shape(minibatch, shape):
+
+    for item in minibatch.items():
+        if item[1].data.shape[1:] == shape:
+            return item[1]
+
+    return None
+
