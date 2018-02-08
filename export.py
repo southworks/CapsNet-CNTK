@@ -76,6 +76,8 @@ class Export():
             manipulated_grid = np.reshape(image_grid(images, cols=11, rows=16), (448, 308))
             save_image('./images/manipulated/imgix_' + str(ix) + '.png', manipulated_grid * 255.)
 
+        print('Manipulated images generated ok.')
+
     def export_weights(self, filename, model, layers=None):
         if not layers:
             layers=len(model.parameters)
@@ -93,6 +95,8 @@ class Export():
             os.makedirs(dirs)
 
         json.dump(params, codecs.open(filename, 'w+', encoding='utf-8'), separators=(',', ':'))
+
+        print('Export weights ok.')
 
     def export_digitcaps(self, reader, fileName, model, count=32):
 
@@ -120,6 +124,8 @@ class Export():
             digits.append(p)
 
         json.dump(digits, codecs.open(fileName, 'w+', encoding='utf-8'), separators=(',', ':'))
+
+        print('Export digitcaps & test images ok.')
 
     def capsule_network(self, count, data_dir, apply_perturbations=False):
 
