@@ -1,6 +1,7 @@
 .vscode/
 tensorboard*/
 checkpoint*/
-data/
-models/
+data*/
+models*/
+exports*/
 __pycache__/
