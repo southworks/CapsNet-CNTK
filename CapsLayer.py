@@ -63,11 +63,10 @@ def DigitCaps(input, num_capsules, dim_out_vector, routings=3, name='DigitCaps')
     W = ct.Parameter(shape=(1152, 10, 16, 8), init=ct.normal(0.01), name=name + '_Weights')
 
     # reshape input for broadcasting on all output capsules
-    input = ct.reshape(input, (1152, 1, 8, 1), name='reshape_input')
+    input = ct.reshape(input, (1152, 1, 1, 8), name='reshape_input')
 
-    # TODO: It would be possible to replace this custom operation with the batchMatmul op when CNTK 2.4 is released.
     # Output shape = [#](1152, 10, 16, 1)
-    u_hat = user_matmul(W, input, shape=(1152, 10, 16, 1))
+    u_hat = ct.reduce_sum(W * input, axis=3)
 
     # we don't need gradients on routing
     u_hat_stopped = ct.stop_gradient(u_hat, name='stop_gradient')
@@ -104,7 +103,7 @@ def DigitCaps(input, num_capsules, dim_out_vector, routings=3, name='DigitCaps')
             Vj_Transpose = ct.transpose(ct.reshape(Vj, (1, 10, 16, 1)), (0, 1, 3, 2), name='Vj_Transpose')
 
             # Output shape = [#][1152, 10, 1, 1]
-            UV = user_matmul(Vj_Transpose, u_hat_stopped, shape=(1152, 10, 1, 1), stop_gradients=True)
+            UV = ct.reduce_sum(ct.reshape(u_hat_stopped, (1152, 10, 1, 16)) * Vj_Transpose, axis=3)
             Bij += UV
 
     # Output shape = [#][10, 16, 1]
