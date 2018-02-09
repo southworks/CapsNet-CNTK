@@ -4,8 +4,8 @@ A CNTK implementation of CapsNet based on Geoffrey Hinton's paper [Dynamic Routi
 
 ## Requeriments
 
-- [Python](https://www.python.org/)
-- [CNTK 2.3.1](https://docs.microsoft.com/en-us/cognitive-toolkit/Setup-Windows-Python?tabs=cntkpy231)
+- [Python >=3.5](https://www.python.org/)
+- [CNTK 2.4](https://docs.microsoft.com/en-us/cognitive-toolkit/Setup-Windows-Python?tabs=cntkpy24)
 - Tensorboard (optional)
 
 ## Architecture
@@ -23,13 +23,13 @@ python main.py
 
 ### Tensorboard
 
-To activate tensorboard, run the following command from the CapsNet-CNTK folder.
+Visualize training progress with tensorboard:
 
 ```
 tensorboard --logdir tensorboard
 ```
 
-Then navigate to http://localhost:6006
+Then, Open your favorite browser and navigate to http://localhost:6006 (assuming you are running the training at localhost)
 
 ## Results
 
@@ -53,12 +53,11 @@ Then navigate to http://localhost:6006
 
 ## TODO
 
+- Improve performance on CPU
 - Complete benchmarks
 - Capsule visualization
 - Improve the API
 - Try other datasets
 
-## Known issues
 
-- It currently works only on CPU due to CNTK lacks the matmul operation, we hope to fix this issue by the CNTK 2.4 using the new batchMatmul operation ( [#2817](https://github.com/Microsoft/CNTK/issues/2817)).
 
