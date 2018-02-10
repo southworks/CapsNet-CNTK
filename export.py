@@ -116,7 +116,7 @@ class Export():
         for ix in range(count):
             p = {}
             p['digit'] = int(np.argmax(source_labels[ix]))
-            p['vector_dim'] = np.sum(np.multiply(np.squeeze(digitcaps[ix]), source_labels[0].T), axis=0).tolist()
+            p['vector_dim'] = np.sum(np.multiply(np.squeeze(digitcaps[ix]), source_labels[ix].T), axis=0).tolist()
             p['file'] = str(ix)+"_"+str(p['digit'])+".jpg"
             im = Image.fromarray(np.reshape(source_images[ix] * 255., (28, 28)))
             im = im.convert('RGB')
