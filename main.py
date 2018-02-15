@@ -66,7 +66,7 @@ class Main():
         # Report & Checkpoint frequency
         print_frequency = (4, ct.DataUnit.minibatch)
         checkpoint_frequency = (100, ct.DataUnit.minibatch)
-        cross_validation_frequency = (1, ct.DataUnit.minibatch)
+        cross_validation_frequency = (40, ct.DataUnit.minibatch)
 
         tensorboard_logdir = './tensorboard'
 
