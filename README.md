@@ -1,6 +1,6 @@
 # CapsNet-CNTK
 
-A CNTK implementation of CapsNet based on Geoffrey Hinton's paper [Dynamic Routing Between Capsules](https://arxiv.org/abs/1710.09829)
+A CNTK implementation of CapsNet based on the paper titled '[Dynamic Routing Between Capsules](https://arxiv.org/abs/1710.09829)' by Sara Sabour, Nicholas Frost and Geoffrey Hinton.
 
 ## Requeriments
 
