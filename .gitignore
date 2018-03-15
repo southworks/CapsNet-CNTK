@@ -5,3 +5,9 @@ data*/
 models*/
 exports*/
 __pycache__/
+
+# ignore the virtual environment setup for this project
+venv/
+
+# ignore the pycharm environment setup
+.idea/
