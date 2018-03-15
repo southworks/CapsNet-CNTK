@@ -30,7 +30,7 @@ except ImportError:
 def load_data(src, cimg):
     print('Downloading ' + src)
     gzfname, h = urlretrieve(src, './delete.me')
-    print('Done.')
+    print('Done')
     try:
         with gzip.open(gzfname) as gz:
             n = struct.unpack('I', gz.read(4))
@@ -81,23 +81,6 @@ def try_download(data_src, labels_src, cimg):
     return np.hstack((data, labels))
 
 
-# Download the data
-# URLs for the train image and labels data
-url_train_image = 'http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz'
-url_train_labels = 'http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz'
-num_train_samples = 60000
-
-print("Downloading train data ...")
-train = try_download(url_train_image, url_train_labels, num_train_samples)
-
-url_test_image = 'http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz'
-url_test_labels = 'http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz'
-num_test_samples = 10000
-
-print("Downloading test data")
-test = try_download(url_test_image, url_test_labels, num_test_samples)
-
-
 # Save the data files into a format compatible with CNTK text reader
 def savetxt(filename, ndarray):
     directory = os.path.dirname(filename)
@@ -118,6 +101,22 @@ def savetxt(filename, ndarray):
     else:
         print("File already exists", filename)
 
+
+# Download the data
+# URLs for the train image and labels data
+url_train_image = 'http://yann.lecun.com/exdb/mnist/train-images-idx3-ubyte.gz'
+url_train_labels = 'http://yann.lecun.com/exdb/mnist/train-labels-idx1-ubyte.gz'
+num_train_samples = 60000
+
+print("Downloading train data ...")
+train = try_download(url_train_image, url_train_labels, num_train_samples)
+
+url_test_image = 'http://yann.lecun.com/exdb/mnist/t10k-images-idx3-ubyte.gz'
+url_test_labels = 'http://yann.lecun.com/exdb/mnist/t10k-labels-idx1-ubyte.gz'
+num_test_samples = 10000
+
+print("Downloading test data")
+test = try_download(url_test_image, url_test_labels, num_test_samples)
 
 # Save the train and test files (prefer our default path for the data)
 data_dir = os.path.join("..", "Examples", "Image", "DataSets", "MNIST")
